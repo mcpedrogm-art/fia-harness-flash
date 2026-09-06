@@ -127,7 +127,6 @@ Tú solo rellenas el "qué se hizo" y la validación **real**, marcas la tarea
 | `tests/test_flash_tools.py` | tests del propio kit |
 | `PLAN_PRO.md` | plan de desarrollo v1 → v2 PRO: fases, criterios de aceptación y guardarraíles |
 | `ESTUDIO_MERCADO.md` | análisis de competidores y posicionamiento (basado en fuentes, sept. 2026) |
-| `web/index.html` | landing del producto: beneficios, comparativa y FAQ (un solo archivo, sin dependencias) |
 
 ## 🚨 Las reglas que nunca se saltan
 

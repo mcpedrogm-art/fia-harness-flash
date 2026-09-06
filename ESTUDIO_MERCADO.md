@@ -1,8 +1,7 @@
 # ESTUDIO_MERCADO.md — ¿Existen herramientas como FIA FLASH?
 
 **Fecha:** septiembre 2026 · **Alcance:** estudio informal de escritorio
-(búsqueda web, sin entrevistas). Sirve de base al posicionamiento de la web
-(`web/index.html`).
+(búsqueda web, sin entrevistas). Define el posicionamiento del kit.
 
 ---
 
@@ -95,7 +94,7 @@ kit llama *Modo Flash*.
   categoría crece, llegarán traducciones. La ventaja de "nativo" (no
   traducido) es temporal y hay que usarla ahora.
 
-## 6. Mensaje central para la web
+## 6. Mensaje central del posicionamiento
 
 > **Para el 84% que ya construye con IA y el 46% que no se fía de lo que sale:
 > FIA Flash es el cinturón de seguridad del desarrollo exprés.**
