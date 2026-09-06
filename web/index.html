@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIA Flash — El cinturón de seguridad del desarrollo exprés con IA</title>
+<meta name="description" content="FIA Flash es un mini-harness de gobernanza para mini-proyectos construidos con IA: triage, aprobación humana, checklists de seguridad y UX que se inyectan solos, y validación real. Cero dependencias, offline, en español.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+  :root{
+    --bg:#0a0d13; --panel:#121722; --panel-2:#171d2b; --line:#232b3d;
+    --text:#e8ebf2; --muted:#9aa3b5; --accent:#ffd60a; --accent-dim:#f5c51855;
+    --ok:#4ade80; --bad:#f87171; --info:#7dd3fc; --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{transition:none!important;animation:none!important}}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+  section{padding:88px 0}
+  h2{font-size:clamp(1.6rem,3.4vw,2.3rem);line-height:1.2;letter-spacing:-.02em;margin-bottom:14px}
+  .kicker{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+  .lead{color:var(--muted);font-size:1.08rem;max-width:52rem}
+  a{color:var(--info)}
+  a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+  code{font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.92em;background:#1c2333;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:#ffe9a3}
+
+  /* ---------- nav ---------- */
+  nav{position:sticky;top:0;z-index:50;background:rgba(10,13,19,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;gap:26px;height:64px}
+  .logo{font-weight:800;font-size:1.05rem;letter-spacing:-.01em;text-decoration:none;color:var(--text)}
+  .logo span{color:var(--accent)}
+  .nav-links{display:flex;gap:22px;margin-left:auto}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:.92rem}
+  .nav-links a:hover{color:var(--text)}
+  .btn{display:inline-block;background:var(--accent);color:#0a0d13;font-weight:700;text-decoration:none;padding:9px 18px;border-radius:10px;font-size:.92rem;white-space:nowrap}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--muted)}
+  .btn.big{padding:13px 26px;font-size:1rem;border-radius:12px}
+  @media (max-width:760px){.nav-links a{display:none}}
+
+  /* ---------- hero ---------- */
+  header{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .glow{position:absolute;inset:-40% -20% auto;height:130%;background:
+    radial-gradient(600px 320px at 22% 10%,#ffd60a18,transparent 60%),
+    radial-gradient(700px 380px at 80% 0%,#7dd3fc14,transparent 60%);pointer-events:none}
+  .hero{position:relative;padding:96px 0 72px;text-align:center}
+  .hero h1{font-size:clamp(2.1rem,5.4vw,3.6rem);line-height:1.08;letter-spacing:-.03em;max-width:21ch;margin:0 auto 20px}
+  .hero h1 em{font-style:normal;color:var(--accent)}
+  .badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 16px;font-size:.8rem;color:var(--muted);margin-bottom:26px}
+  .badge b{color:var(--accent);font-weight:700}
+  .hero p.sub{color:var(--muted);font-size:1.14rem;max-width:44rem;margin:0 auto 34px}
+  .hero p.sub b{color:var(--text);font-weight:600}
+  .ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:44px}
+  .pipe{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;align-items:center}
+  .pipe .step{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 16px;font-size:.86rem;color:var(--text)}
+  .pipe .arr{color:var(--accent);font-weight:700}
+  .stats{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:34px}
+  .stats .chip{font-size:.85rem;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:6px 14px}
+  .stats .chip b{color:var(--text)}
+
+  /* ---------- paradoja ---------- */
+  .bignums{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:40px 0 26px}
+  .bignum{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--line);border-radius:var(--radius);padding:26px;text-align:center}
+  .bignum .n{font-size:clamp(2rem,4.5vw,2.9rem);font-weight:800;letter-spacing:-.03em}
+  .bignum .n.y{color:var(--accent)} .bignum .n.r{color:var(--bad)}
+  .bignum .t{color:var(--muted);font-size:.9rem;margin-top:6px}
+  .cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+  .card h3{font-size:1.02rem;margin:10px 0 8px}
+  .card p{color:var(--muted);font-size:.93rem}
+  .card .ico{font-size:1.5rem}
+  .srcnote{color:#6b7690;font-size:.8rem;margin-top:26px}
+  .srcnote a{color:#8fa0c0}
+
+  /* ---------- pasos ---------- */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:40px}
+  .step-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;position:relative}
+  .step-card .num{position:absolute;top:-14px;left:20px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#0a0d13;font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center}
+  .step-card h3{font-size:.98rem;margin:10px 0 6px}
+  .step-card p{color:var(--muted);font-size:.88rem}
+  .term{background:#0d1119;border:1px solid var(--line);border-radius:12px;padding:20px 22px;font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.88rem;line-height:1.75;margin-top:34px;overflow-x:auto}
+  .term .c{color:#5b6577}
+  .term .g{color:var(--ok)} .term .y{color:var(--accent)} .term .d{color:var(--muted)}
+  .inj{border:1px solid #ffd60a44;background:#ffd60a0d;border-radius:12px;padding:18px 20px;margin-top:18px;font-size:.95rem;color:var(--text)}
+  .inj b{color:var(--accent)}
+
+  /* ---------- grid 6 ---------- */
+  .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
+  .feat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+  .feat .ico{font-size:1.45rem}
+  .feat h3{font-size:1rem;margin:10px 0 6px}
+  .feat p{color:var(--muted);font-size:.9rem}
+
+  /* ---------- tabla ---------- */
+  .tbl-wrap{overflow-x:auto;margin-top:38px;border:1px solid var(--line);border-radius:var(--radius)}
+  table{border-collapse:collapse;width:100%;min-width:760px;font-size:.9rem}
+  th,td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line)}
+  thead th{background:var(--panel-2);font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  tbody tr:last-child td{border-bottom:none}
+  td:first-child{color:var(--muted)}
+  .col-flash{background:#ffd60a0a;color:var(--text)}
+  thead .col-flash{color:var(--accent)}
+  .ok{color:var(--ok);font-weight:600} .bad{color:var(--bad)} .mid{color:var(--info)}
+  .tbl-note{color:var(--muted);font-size:.85rem;margin-top:14px}
+
+  /* ---------- quién ---------- */
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:38px}
+  .duo .box{border-radius:var(--radius);padding:26px;border:1px solid var(--line)}
+  .box.yes{background:#4ade8010;border-color:#4ade8033}
+  .box.no{background:#f871710d;border-color:#f8717133}
+  .box h3{font-size:1.05rem;margin-bottom:14px}
+  .box ul{list-style:none}
+  .box li{padding:7px 0;font-size:.94rem;color:var(--text);display:flex;gap:10px}
+  .box li i{font-style:normal}
+  .box.yes li i{color:var(--ok)} .box.no li i{color:var(--bad)}
+  .box p.small{color:var(--muted);font-size:.85rem;margin-top:14px}
+
+  /* ---------- roadmap ---------- */
+  .road{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:38px}
+  .road .r{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+  .r .tag{font-size:.72rem;font-weight:700;letter-spacing:.1em;color:var(--info);text-transform:uppercase}
+  .r h3{font-size:1rem;margin:8px 0 6px}
+  .r p{color:var(--muted);font-size:.9rem}
+
+  /* ---------- faq ---------- */
+  .faq{max-width:760px;margin:36px auto 0}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0 22px;margin-bottom:12px}
+  summary{cursor:pointer;padding:18px 0;font-weight:600;list-style:none;position:relative}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";position:absolute;right:0;color:var(--accent);font-size:1.3rem;top:50%;transform:translateY(-50%)}
+  details[open] summary::after{content:"–"}
+  details p{color:var(--muted);padding:0 0 18px;font-size:.94rem}
+
+  /* ---------- cta final ---------- */
+  .final{background:linear-gradient(180deg,#121722,#0d1017);border-top:1px solid var(--line)}
+  .final .in{text-align:center;padding:84px 0}
+  .final h2{max-width:22ch;margin:0 auto 16px}
+  .cmd{display:inline-block;background:#0d1119;border:1px solid var(--line);border-radius:10px;padding:12px 22px;font-family:ui-monospace,Consolas,monospace;font-size:.92rem;margin:18px 0 26px}
+  .cmd .c{color:#5b6577}
+
+  footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-size:.84rem}
+  footer .f{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  footer a{color:#8fa0c0}
+
+  @media (max-width:860px){
+    .bignums,.cards3,.grid6,.road{grid-template-columns:1fr}
+    .steps{grid-template-columns:repeat(2,1fr)}
+    .duo{grid-template-columns:1fr}
+    section{padding:64px 0}
+  }
+  @media (max-width:520px){.steps{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <a class="logo" href="#top">⚡ FIA <span>FLASH</span></a>
+    <div class="nav-links">
+      <a href="#como">Cómo funciona</a>
+      <a href="#beneficios">Beneficios</a>
+      <a href="#comparativa">Comparativa</a>
+      <a href="#quien">Para quién</a>
+    </div>
+    <a class="btn" href="#empezar">Descargar el kit</a>
+  </div>
+</nav>
+
+<header id="top">
+  <div class="glow" aria-hidden="true"></div>
+  <div class="wrap hero">
+    <span class="badge">⚡ SISTEMA EXPRÉS PARA MINI-PROYECTOS CON IA</span>
+    <h1>De la idea a algo funcionando y validado, <em>en una sesión</em>.</h1>
+    <p class="sub">FIA Flash es un <b>mini-harness de gobernanza</b> para scripts, mini-apps y
+    funcionalidades pequeñas construidas con IA: triage de elegibilidad, aprobación humana,
+    checklists de seguridad y UX que <b>se inyectan solos en cada tarea</b>, y validación real.
+    Seis archivos, cero dependencias, offline.</p>
+    <div class="ctas">
+      <a class="btn big" href="#empezar">Descargar el kit</a>
+      <a class="btn big ghost" href="#como">Ver cómo funciona</a>
+    </div>
+    <div class="pipe" aria-label="Flujo del sistema">
+      <span class="step">idea</span><span class="arr">→</span>
+      <span class="step">brief</span><span class="arr">→</span>
+      <span class="step">triage</span><span class="arr">→</span>
+      <span class="step">tareas</span><span class="arr">→</span>
+      <span class="step">validación real</span><span class="arr">→</span>
+      <span class="step">cierre</span>
+    </div>
+    <div class="stats">
+      <span class="chip"><b>6</b> archivos, todo legible</span>
+      <span class="chip"><b>0</b> dependencias (Python stdlib)</span>
+      <span class="chip"><b>11</b> tests del propio kit</span>
+      <span class="chip"><b>100%</b> offline y privado</span>
+      <span class="chip"><b>100%</b> en español</span>
+    </div>
+  </div>
+</header>
+
+<section id="problema">
+  <div class="wrap">
+    <span class="kicker">El problema</span>
+    <h2>Todos construyen con IA. Cada vez menos gente confía en lo que sale.</h2>
+    <p class="lead">La encuesta oficial de Stack Overflow 2025 (~49.000 desarrolladores) dibuja
+    la paradoja que FIA Flash viene a resolver: adopción récord, confianza en mínimos históricos.</p>
+    <div class="bignums">
+      <div class="bignum"><div class="n y">84%</div><div class="t">usa o planea usar IA en su desarrollo (76% en 2024)</div></div>
+      <div class="bignum"><div class="n r">33%</div><div class="t">confía en la precisión de la IA — solo el 3% confía “mucho”</div></div>
+      <div class="bignum"><div class="n r">72%</div><div class="t">rechaza el “vibe coding” sin control para trabajo profesional</div></div>
+    </div>
+    <div class="cards3">
+      <div class="card"><div class="ico" aria-hidden="true">🌀</div>
+        <h3>El agente improvisa</h3>
+        <p>Sin límites escritos, una petición de “un script rápido” acaba en tres módulos,
+        una migración y media librería que nadie pidió. El scope creep es la norma, no la excepción.</p></div>
+      <div class="card"><div class="ico" aria-hidden="true">🤥</div>
+        <h3>La validación se promete, no se ejecuta</h3>
+        <p>“Todos los tests pasan” es la frase más repetida y menos verificada del desarrollo
+        con IA. Sin un gate que la ejecute, la honestidad depende de la suerte.</p></div>
+      <div class="card"><div class="ico" aria-hidden="true">🎩</div>
+        <h3>Los frameworks serios son demasiada ceremonia</h3>
+        <p>Spec Kit, BMAD o Kiro brillan en proyectos de semanas. Para un mini-proyecto de
+        una tarde, imponer ese proceso es la razón por la que se abandona y se vuelve a improvisar.</p></div>
+    </div>
+    <p class="srcnote">Fuente: <a href="https://survey.stackoverflow.co/2025/ai" target="_blank" rel="noopener">Stack Overflow Developer Survey 2025, sección IA</a>. Estudio completo en <code>ESTUDIO_MERCADO.md</code>.</p>
+  </div>
+</section>
+
+<section id="como" style="background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <span class="kicker">Cómo funciona</span>
+    <h2>Toda la gobernanza de un proyecto serio, comprimida en 3 comandos.</h2>
+    <p class="lead">FIA Flash no es un gestor de tareas: es un sistema de control con reglas.
+    Monta el proyecto, genera las tareas con sus checklists ya dentro, y cierra cuando la
+    validación es real.</p>
+    <div class="steps">
+      <div class="step-card"><span class="num">1</span>
+        <h3>Monta el proyecto</h3>
+        <p><code>bootstrap_flash.py</code> copia las plantillas, crea <code>src/</code> y
+        <code>tests/</code>, y extrae tu brief en un <code>FLASH_BRIEF.md</code> con triage
+        de elegibilidad incluido. Idempotente: nunca sobrescribe.</p></div>
+      <div class="step-card"><span class="num">2</span>
+        <h3>Aprueba el alcance</h3>
+        <p>Tú marcas el triage (6 casillas) y apruebas las tareas. El silencio no es
+        aprobación: sin marca, el sistema avisa y no deja avanzar.</p></div>
+      <div class="step-card"><span class="num">3</span>
+        <h3>Genera tareas con checklist dentro</h3>
+        <p><code>flash_task.py</code> detecta la primera tarea pendiente, decide con una
+        heurística de palabras clave qué riesgos toca, e inyecta el checklist completo
+        dentro de la tarea.</p></div>
+      <div class="step-card"><span class="num">4</span>
+        <h3>Cierra con validación real</h3>
+        <p>Objetivo, criterio de éxito y validación ejecutada quedan registrados en cada
+        tarea. Si el proyecto crece, el veredicto es “necesita el Harness completo” — no se alarga.</p></div>
+    </div>
+    <div class="term" role="img" aria-label="Ejemplo de sesión de terminal con FIA Flash">
+<span class="c">$ python bootstrap_flash.py</span><br>
+<span class="g">🎉 Bootstrap de Modo Flash completado.</span><br>
+<span class="c">$ python flash_task.py</span><br>
+<span class="d">-> Detectada siguiente tarea pendiente:</span> <span class="y">T1 — Login básico</span><br>
+&nbsp;&nbsp;<span class="d">-</span> Seguridad: <span class="g">SÍ</span> <span class="c">&nbsp;&nbsp;← checklist de FLASH_SECURITY.md inyectado</span><br>
+&nbsp;&nbsp;<span class="d">-</span> Visibilidad/UI-UX: <span class="d">NO</span> <span class="c">← “No aplica”</span><br>
+<span class="g">🎉 Generado: FLASH_TASK-T1.md</span>
+    </div>
+    <div class="inj">🔍 <b>La mecánica clave:</b> si la tarea menciona <code>login</code>,
+    <code>password</code>, <code>API</code> o <code>deploy</code>, nace con el checklist de
+    seguridad completo. Si menciona <code>página</code>, <code>SEO</code> o <code>formulario</code>,
+    con el de visibilidad y UX. Si no toca nada de eso, con un “No aplica” limpio.
+    El checklist que nadie lee se convierte en uno que no se puede esquivar.</div>
+  </div>
+</section>
+
+<section id="beneficios">
+  <div class="wrap">
+    <span class="kicker">Beneficios</span>
+    <h2>Por qué FIA Flash y no “ya lo apunto en un post-it”.</h2>
+    <div class="grid6">
+      <div class="feat"><div class="ico" aria-hidden="true">🛡️</div>
+        <h3>Gobernanza desde el minuto 0</h3>
+        <p>Triage, aprobación humana y checklists de seguridad no son un PDF que nadie abre:
+        viven dentro de cada tarea generada.</p></div>
+      <div class="feat"><div class="ico" aria-hidden="true">🚫</div>
+        <h3>Anti-scope-creep con mecanismo</h3>
+        <p>Regla de no promoción: si el proyecto deja de caber en Flash, se cierra y se migra.
+        Alargar la tarea rápida está prohibido por diseño.</p></div>
+      <div class="feat"><div class="ico" aria-hidden="true">🤝</div>
+        <h3>Funciona con cualquier agente</h3>
+        <p>No está atado a un IDE ni a un modelo: es Markdown + Python. Claude Code, Cursor,
+        Copilot, o simplemente tú y un editor.</p></div>
+      <div class="feat"><div class="ico" aria-hidden="true">📦</div>
+        <h3>Cero dependencias, offline</h3>
+        <p>Sin nube, sin cuenta, sin telemetría. Python estándar y 6 archivos de texto.
+        Tu código y tus decisiones nunca salen de tu máquina.</p></div>
+      <div class="feat"><div class="ico" aria-hidden="true">🧪</div>
+        <h3>Validación real, verificable</h3>
+        <p>Cada tarea registra el comando de validación ejecutado y su resultado.
+        El propio kit tiene 11 tests que lo demuestran.</p></div>
+      <div class="feat"><div class="ico" aria-hidden="true">🇪🇸</div>
+        <h3>Español nativo</h3>
+        <p>Reglas, plantillas y heurísticas pensadas en español (con acentos incluidos).
+        No hay ninguna alternativa del género en este idioma.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="comparativa" style="background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <span class="kicker">Comparativa</span>
+    <h2>El hueco que ocupa FIA Flash en el mercado.</h2>
+    <p class="lead">La categoría “desarrollo guiado por especificaciones con IA” está llena de
+    herramientas para proyectos medianos y grandes. Ninguna atiende el micro-proyecto con
+    gobernanza exprés. Análisis completo en <code>ESTUDIO_MERCADO.md</code>.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col" class="col-flash">⚡ FIA Flash</th>
+            <th scope="col">GitHub Spec Kit</th>
+            <th scope="col">BMAD-METHOD</th>
+            <th scope="col">Claude Task Master</th>
+            <th scope="col">Backlog.md</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Escala ideal</td><td class="col-flash">Micro (1-3 tareas, 1 sesión)</td><td>Mediano / grande</td><td>Grande, ciclo completo</td><td>Multifase</td><td>Cualquier tamaño (solo tareas)</td></tr>
+          <tr><td>Checklists de seguridad y UX integrados</td><td class="col-flash"><span class="ok">✅ inyectados por tarea</span></td><td class="bad">❌</td><td class="bad">❌</td><td class="bad">❌</td><td class="bad">❌</td></tr>
+          <tr><td>Aprobación humana como gate</td><td class="col-flash"><span class="ok">✅ obligatoria</span></td><td class="mid">parcial</td><td class="mid">parcial</td><td class="bad">❌</td><td class="bad">❌</td></tr>
+          <tr><td>Regla anti-scope-creep (triage + cierre)</td><td class="col-flash"><span class="ok">✅ mecanismo propio</span></td><td class="bad">❌</td><td class="bad">❌</td><td class="bad">❌</td><td class="bad">❌</td></tr>
+          <tr><td>Dependencias</td><td class="col-flash"><span class="ok">0 — Python stdlib</span></td><td>Python + uv</td><td>Node.js</td><td>Node.js + API IA</td><td>Node.js</td></tr>
+          <tr><td>Offline, sin cuenta</td><td class="col-flash"><span class="ok">✅</span></td><td><span class="ok">✅</span></td><td><span class="ok">✅</span></td><td class="mid">necesita API de IA</td><td><span class="ok">✅</span></td></tr>
+          <tr><td>Idioma</td><td class="col-flash"><span class="ok">español nativo</span></td><td>inglés</td><td>inglés</td><td>inglés</td><td>inglés</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tbl-note">No son sustitutos: Spec Kit o BMAD son el “Harness completo” del
+    ecosistema; FIA Flash cubre la escala que ellos no atienden. Fuente de las cifras de
+    adopción: Stack Overflow Survey 2025.</p>
+  </div>
+</section>
+
+<section id="quien">
+  <div class="wrap">
+    <span class="kicker">Para quién es</span>
+    <h2>Flash no es para todo. Y ese es el punto.</h2>
+    <div class="duo">
+      <div class="box yes">
+        <h3>✅ Usar Flash si…</h3>
+        <ul>
+          <li><i>✓</i> Una sola funcionalidad, script o mini-app — cabe en una frase</li>
+          <li><i>✓</i> Cero o una integración externa, de solo lectura</li>
+          <li><i>✓</i> Criterio de éxito comprobable hoy mismo</li>
+          <li><i>✓</i> Se cierra en 1 a 3 tareas como mucho</li>
+        </ul>
+        <p class="small">Ejemplos: un CLI de reportes, un conversor de datos, una landing,
+        un script de automatización, una API mínima de consulta.</p>
+      </div>
+      <div class="box no">
+        <h3>❌ No usar Flash si…</h3>
+        <ul>
+          <li><i>✗</i> Auth, roles, pagos, datos sensibles o requisitos normativos</li>
+          <li><i>✗</i> Migraciones o cambios de esquema en producción</li>
+          <li><i>✗</i> Varias funcionalidades independientes en paralelo</li>
+          <li><i>✗</i> Cualquier duda razonable sobre el alcance</li>
+        </ul>
+        <p class="small">Y si aparece a mitad de tarea: se para y se migra. El sistema lo dice
+        por ti — veredicto “necesita el Harness completo”.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="roadmap" style="background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <span class="kicker">Roadmap — v2 PRO</span>
+    <h2>De “confía en que todos somos cuidadosos” a “hace que la negligencia sea difícil”.</h2>
+    <p class="lead">El plan de desarrollo está definido en <code>PLAN_PRO.md</code>. Tres pilares:</p>
+    <div class="road">
+      <div class="r"><span class="tag">Fase 2-3</span><h3>Estado estructurado + gate de validación</h3>
+        <p>El estado en datos, no en Markdown parseado; y un <code>flash done</code> que ejecuta
+        los tests declarados, registra la salida y no permite cerrar sin validación real.</p></div>
+      <div class="r"><span class="tag">Fase 4</span><h3>Auditoría y seguridad automatizada</h3>
+        <p>Registro append-only de aprobaciones y validaciones, más gitleaks, pip-audit y
+        bandit integrados en el gate de cierre.</p></div>
+      <div class="r"><span class="tag">Fase 5</span><h3>Distribución y doctor</h3>
+        <p>Kit instalable y versionado, con <code>flash doctor</code> detectando drift entre
+        la versión del kit y los proyectos existentes, y migrando sin pérdida.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <span class="kicker">Preguntas frecuentes</span>
+    <h2>Lo que todo el mundo pregunta.</h2>
+    <div class="faq">
+      <details open>
+        <summary>¿Necesito algún agente de IA concreto para usarlo?</summary>
+        <p>No. FIA Flash es Markdown + Python estándar: funciona con Claude Code, Cursor,
+        Copilot, cualquier otro agente — o sin ninguno. Las plantillas y reglas son las
+        mismas pase lo que pase por detrás.</p>
+      </details>
+      <details>
+        <summary>¿Es gratis? ¿Dónde está la letra pequeña?</summary>
+        <p>Es un kit de archivos: cópialo, úsalo, adáptalo. No hay servicio, cuenta ni
+        telemetría — de ahí que no pueda cobrarte por nada. La versión PRO del roadmap
+        seguirá siendo local y auditable.</p>
+      </details>
+      <details>
+        <summary>¿Por qué la regla de “no promoción”? Si el proyecto crece, ¿no es mejor continuarlo?</summary>
+        <p>Es la regla que más se extraña y la que más salva. Continuar un proyecto Flash
+        estirado es cómo nacen los proyectos sin SPEC ni control de decisiones. Flash
+        reutiliza el código escrito como punto de partida de un proyecto con estructura
+        completa — pero su gobernanza empieza de cero, limpia.</p>
+      </details>
+      <details>
+        <summary>Mi proyecto es “solo un script”. ¿Para qué quiero todo esto?</summary>
+        <p>Justo por eso: Flash es la versión de bolsillo. Un brief de 5 líneas, un triage de
+        6 casillas, 1-3 tareas con su checklist y la validación ejecutada. Cinco minutos de
+        proceso para que el script de esta tarde no sea el que tire el de mañana.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="final" id="empezar">
+  <div class="wrap in">
+    <span class="kicker">Empieza hoy</span>
+    <h2>Seis archivos. Tres comandos. Cero excusas.</h2>
+    <p class="lead" style="margin:0 auto">Descarga el kit, copia las plantillas a tu proyecto
+    y deja que la primera tarea ya nazca con su checklist de seguridad dentro.</p>
+    <div class="cmd"><span class="c">$</span> python bootstrap_flash.py <span class="c">→</span> python flash_task.py</div>
+    <br>
+    <a class="btn big" href="#top">Descargar el kit</a>
+    <p class="srcnote" style="text-align:center">Kit local y auditable · Markdown + Python stdlib ·
+    <a href="../ESTUDIO_MERCADO.md">estudio de mercado</a> · <a href="../PLAN_PRO.md">roadmap PRO</a></p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap f">
+    <span>⚡ FIA FLASH — sistema exprés para mini-proyectos con IA</span>
+    <span>Datos de mercado: <a href="https://survey.stackoverflow.co/2025/ai" target="_blank" rel="noopener">Stack Overflow Survey 2025</a> · Análisis SDD: <a href="https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html" target="_blank" rel="noopener">Martin Fowler</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
