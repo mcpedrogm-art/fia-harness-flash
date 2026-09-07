@@ -126,7 +126,6 @@ Tú solo rellenas el "qué se hizo" y la validación **real**, marcas la tarea
 | `flash_task.py` | genera la siguiente tarea (nunca pisa una ya generada sin `--force`) |
 | `tests/test_flash_tools.py` | tests del propio kit |
 | `PLAN_PRO.md` | plan de desarrollo v1 → v2 PRO: fases, criterios de aceptación y guardarraíles |
-| `ESTUDIO_MERCADO.md` | análisis de competidores y posicionamiento (basado en fuentes, sept. 2026) |
 
 ## 🚨 Las reglas que nunca se saltan
 
